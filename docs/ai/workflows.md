@@ -15,7 +15,7 @@
 
 ## Phase 3: Commit Guidelines
 
-**STRICT REQUIREMENT:** When committing changes with no code changes (e.g., documentation-only), add `[skip ci]` after an empty line following the commit description:
+**STRICT REQUIREMENT:** When committing changes with no code changes (e.g., documentation-only, changelog entries), add `[skip ci]` after an empty line following the commit description:
 ```
 Update documentation
 
@@ -31,7 +31,7 @@ Update documentation
 - **REQUIRED:** One sentence on **User-Visible Impact** (or state "None").
 - **REQUIRED:** A "What and Why" summary.
 
-**STRICT REQUIREMENT:** After creating the PR, you MUST generate a changelog entry. The changelog entry must reference the PR with a full GitHub link placed at the end of the first line:
+**STRICT REQUIREMENT:** After creating the PR, you MUST generate and commit a changelog entry. The changelog entry must reference the PR with a full GitHub link placed at the end of the first line:
 ```
 - **Security fix:** Fix mass assignment and open redirect vulnerabilities in SitesController, [#1152](https://github.com/owen2345/camaleon-cms/pull/1152)
 ```
