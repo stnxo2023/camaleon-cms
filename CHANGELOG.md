@@ -24,6 +24,8 @@
   - Third-party plugins (via Ruby gems like `cama_contact_form`, `cama_meta_tag`) automatically protected when inheriting from `PluginsAdminController`
   - Thanks, Amir Aliu and Enrik Mustafa for reporting this
 
+- **Security fix:** Fix reflected XSS vulnerability via `params[:info]` in flash messages, [#1154](https://github.com/owen2345/camaleon-cms/pull/1154)
+
 - **BREAKING CHANGE - Security fix:** Fix Broken Access Control (CWE-862) in MediaController
   - Add consistent authorization checks to all MediaController endpoints requiring `:manage, :media` permission
   - Previously, only `index` and `ajax` actions checked authorization; other endpoints (`upload`, `download_private_file`, `crop`, `actions`) only checked authentication
