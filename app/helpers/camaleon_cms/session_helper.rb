@@ -26,7 +26,7 @@ module CamaleonCms
       if redirect_url.present?
         redirect_to redirect_url
       elsif (return_to = cookies.delete(:return_to)).present?
-        redirect_to return_to
+        redirect_to safe_redirect_url(return_to) || cama_admin_dashboard_path
       else
         redirect_to cama_admin_dashboard_path
       end
@@ -166,6 +166,18 @@ module CamaleonCms
     end
 
     private
+
+    # validate redirect url to prevent open redirect attacks
+    def safe_redirect_url(url)
+      return if url.blank?
+
+      uri = URI.parse(url)
+      return if uri.host.present? && uri.host != request.host
+
+      url
+    rescue URI::InvalidURIError
+      nil
+    end
 
     # calculate the current user for API
     def cama_calc_api_current_user
