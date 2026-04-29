@@ -10,12 +10,12 @@ module CamaleonCms
 
         def index
           @nav_menu = if params[:id].present?
-            current_site.nav_menus.find_by_id(params[:id])
-          elsif params[:slug].present?
-            current_site.nav_menus.find_by_slug(params[:slug])
-          else
-            current_site.nav_menus.first
-          end
+                        current_site.nav_menus.find_by_id(params[:id])
+                      elsif params[:slug].present?
+                        current_site.nav_menus.find_by_slug(params[:slug])
+                      else
+                        current_site.nav_menus.first
+                      end
           @post_types = current_site.post_types
           add_asset_library('nav_menu')
           render 'index'
@@ -66,10 +66,10 @@ module CamaleonCms
         # render edit external menu item
         def edit_menu_item
           render '_external_menu', layout: false,
-                 locals: {
-                   nav_menu: current_site.nav_menus.find(params[:nav_menu_id]),
-                   menu_item: current_site.nav_menu_items.find(params[:id])
-                 }
+                                   locals: {
+                                     nav_menu: current_site.nav_menus.find(params[:nav_menu_id]),
+                                     menu_item: current_site.nav_menu_items.find(params[:id])
+                                   }
         end
 
         # update an external menu item
