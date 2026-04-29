@@ -150,7 +150,8 @@ module CamaleonCms
           return {} if allowed_keys.blank?
 
           params.require(:field_options).to_unsafe_h.select { |k, _| k.to_s =~ /\A\d+\z/ }.transform_values do |fields|
-            ActionController::Parameters.new(fields).permit(allowed_keys.index_with { [:id, :group_number, values: {}] }).to_h
+            ActionController::Parameters.new(fields)
+                                        .permit(allowed_keys.index_with { [:id, :group_number, { values: {} }] }).to_h
           end
         end
 
