@@ -6,6 +6,8 @@
 
 - **Security fix:** Fix open redirect vulnerability in session helper via return_to cookie, [#1155](https://github.com/owen2345/camaleon-cms/pull/1155)
 
+- **Security fix:** Fix mass assignment vulnerabilities in NavMenusController, [#1157](https://github.com/owen2345/camaleon-cms/pull/1157)
+
 - **BREAKING CHANGE** - Add permissions for Custom Fields management in the admin area
   - Existing installs upgrading to 2.9.2 should review the [migration guide](docs/upgrading-to-2.9.2.md)
 
