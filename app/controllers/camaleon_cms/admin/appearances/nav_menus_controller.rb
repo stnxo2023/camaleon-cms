@@ -10,12 +10,12 @@ module CamaleonCms
 
         def index
           @nav_menu = if params[:id].present?
-                        current_site.nav_menus.find_by_id(params[:id])
-                      elsif params[:slug].present?
-                        current_site.nav_menus.find_by_slug(params[:slug])
-                      else
-                        current_site.nav_menus.first
-                      end
+            current_site.nav_menus.find_by_id(params[:id])
+          elsif params[:slug].present?
+            current_site.nav_menus.find_by_slug(params[:slug])
+          else
+            current_site.nav_menus.first
+          end
           @post_types = current_site.post_types
           add_asset_library('nav_menu')
           render 'index'
@@ -27,7 +27,7 @@ module CamaleonCms
         end
 
         def create
-          nav_menu = current_site.nav_menus.new(params.require(:nav_menu).permit!)
+          nav_menu = current_site.nav_menus.new(nav_menu_params)
           nav_menu.save
           flash[:notice] = t('.created_menu', default: 'Created Menu')
           redirect_to action: :index, id: nav_menu.id
@@ -35,7 +35,7 @@ module CamaleonCms
 
         def update
           nav_menu = current_site.nav_menus.find(params[:id])
-          nav_menu.update(params.require(:nav_menu).permit!)
+          nav_menu.update(nav_menu_params)
           flash[:notice] = t('.updated_menu', default: 'Menu updated')
           redirect_to action: :index, id: nav_menu.id
         end
@@ -59,17 +59,17 @@ module CamaleonCms
 
         def save_custom_settings
           @nav_menu_item = current_site.nav_menu_items.find(params[:id])
-          @nav_menu_item.set_field_values(params.require(:field_options).permit!)
+          @nav_menu_item.set_field_values(permitted_field_options)
           head :ok
         end
 
         # render edit external menu item
         def edit_menu_item
           render '_external_menu', layout: false,
-                                   locals: {
-                                     nav_menu: current_site.nav_menus.find(params[:nav_menu_id]),
-                                     menu_item: current_site.nav_menu_items.find(params[:id])
-                                   }
+                 locals: {
+                   nav_menu: current_site.nav_menus.find(params[:nav_menu_id]),
+                   menu_item: current_site.nav_menu_items.find(params[:id])
+                 }
         end
 
         # update an external menu item
@@ -77,7 +77,7 @@ module CamaleonCms
           @nav_menu = current_site.nav_menus.find(params[:nav_menu_id])
           item = current_site.nav_menu_items.find(params[:id])
           item.update_menu_item(parse_external_menu(params))
-          item.set_options(params.require(:options).permit!) if params[:options].present?
+          item.set_options(permitted_external_options) if params[:options].present?
           render partial: 'menu_items', locals: { items: [item], nav_menu: @nav_menu }
         end
 
@@ -106,7 +106,7 @@ module CamaleonCms
           external_params = params[:external]
           if external_params.present?
             external_item = @nav_menu.append_menu_item(parse_external_menu(external_params))
-            external_item.set_options(external_params.require(:options).permit!) if external_params[:options].present?
+            external_item.set_options(permitted_external_options(external_params)) if external_params[:options].present?
             items << external_item
           end
 
@@ -135,6 +135,40 @@ module CamaleonCms
         # return params to be saved for external menu
         def parse_external_menu(_params)
           { label: _params[:external_label], link: _params[:external_url], type: 'external', target: _params[:target] }
+        end
+
+        # Strong parameters for nav_menu
+        def nav_menu_params
+          params.require(:nav_menu).permit(:name, :slug)
+        end
+
+        # Only permit field_options that match registered custom field slugs
+        def permitted_field_options
+          return {} unless params[:field_options].present?
+
+          params
+            .require(:field_options).permit(*allowed_slugs)
+            .select { |_k, v| v.is_a?(Hash) || v.is_a?(ActionController::Parameters) }
+            .transform_values do |field_data|
+            is_params = field_data.is_a?(ActionController::Parameters)
+            (is_params ? field_data : ActionController::Parameters.new(field_data))
+              .permit(:id, :group_number, values: {}).to_h
+          end
+        end
+
+        # Only permit external menu optionsthat match registered custom field slug
+        def permitted_external_options(external_params = nil)
+          opts = external_params ? external_params[:options] : params[:options]
+          return {} unless opts.present?
+
+          return {} if allowed_slugs.blank?
+
+          opts.permit(*allowed_slugs).to_h
+        end
+
+        def allowed_slugs
+          CamaleonCms::CustomFieldGroup
+            .where(object_class: 'NavMenuItem').eager_load(:fields).flat_map { |g| g.fields.pluck(:slug) }.uniq
         end
       end
     end
