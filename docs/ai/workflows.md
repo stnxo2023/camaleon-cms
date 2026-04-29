@@ -15,12 +15,29 @@
 
 ## Phase 3: Commit Guidelines
 
-**STRICT REQUIREMENT:** When committing changes with no code changes (e.g., documentation-only, changelog entries), add `[skip ci]` after an empty line following the commit description:
+**🔴 MANDATORY: `[skip ci]` for Non-Code Commits**
+
+Before EVERY commit, check: **Does this commit contain ONLY documentation, changelog, or config changes with NO code changes?**
+
+If YES, you MUST format the commit message as:
 ```
-Update documentation
+<commit subject>
 
 [skip ci]
 ```
+
+**Examples of commits requiring `[skip ci]`:**
+- Documentation updates (`.md` files, README, docs/)
+- Changelog entries (`CHANGELOG.md`)
+- Configuration files with no code path changes
+- Comment-only changes
+
+**⚠️ WARNING:** Forgetting `[skip ci]` will trigger unnecessary CI runs. Always verify before pushing!
+
+**Checklist before committing:**
+1. Did I change any `.rb`, `.js`, `.css`, or other code files?
+   - YES → Do NOT add `[skip ci]`
+   - NO → Add `[skip ci]` after empty line in commit message
 
 ## Phase 4: PR Submission Protocol
 **When you are ready to submit, you must generate a description following these STRICT negative constraints:**
