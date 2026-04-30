@@ -108,4 +108,54 @@ RSpec.describe 'CustomFields create/update permissions', type: :request do
       end
     end
   end
+
+  describe 'GET /admin/settings/custom_fields/list' do
+    let(:post_type) { current_site.post_types.create!(name: 'Test PT', slug: 'test-pt') }
+    let(:my_post) { post_type.posts.create!(title: 'Test Post', slug: 'test-post') }
+    let(:category) { post_type.categories.create!(name: 'Test Cat', slug: 'test-cat') }
+
+    it 'renders the list of custom fields successfully' do
+      user = create(:user, role: 'admin', site: current_site)
+      sign_in_as(user, site: current_site)
+
+      get '/admin/settings/custom_fields/list', params: { post_type: post_type.id, post_id: my_post.id }
+      expect(response).to have_http_status(200)
+    end
+
+    it 'respects categories parameter for field groups and updates post categories' do
+      user = create(:user, role: 'admin', site: current_site)
+      sign_in_as(user, site: current_site)
+
+      group = current_site.custom_field_groups.create!(
+        name: 'Cat Group', slug: 'cat-group', object_class: 'Category_Post', objectid: category.id
+      )
+      group.add_field({ name: 'Cat Field', slug: 'cat-field' }, { field_key: 'text' })
+      expect(group.fields.count).to eq(1)
+
+      my_post.update_categories([])
+      get '/admin/settings/custom_fields/list', params: { post_type: post_type.id, post_id: my_post.id, categories: [category.id] }
+
+      expect(response.body).to include('Cat Group')
+      expect(my_post.categories.reload).to include(category)
+    end
+
+    it 'ignores categories parameter from another site' do
+      user = create(:user, role: 'admin', site: current_site)
+      sign_in_as(user, site: current_site)
+
+      other_site = create(:site, slug: 'other-site', name: 'Other Site')
+      other_post_type = other_site.post_types.create!(name: 'Other PT', slug: 'other-pt')
+      other_category = other_post_type.categories.create!(name: 'Other Cat', slug: 'other-cat')
+      other_group = other_site.custom_field_groups.create!(
+        name: 'Other Group', slug: 'other-group', object_class: 'Category_Post', objectid: other_category.id
+      )
+      other_group.add_field({ name: 'Other Field', slug: 'other-field' }, { field_key: 'text' })
+
+      my_post.update_categories([])
+      get '/admin/settings/custom_fields/list', params: { post_type: post_type.id, post_id: my_post.id, categories: [other_category.id] }
+
+      expect(response.body).not_to include('Other Group')
+      expect(my_post.categories.reload).to be_empty
+    end
+  end
 end
