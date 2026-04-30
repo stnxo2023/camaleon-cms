@@ -28,11 +28,14 @@ module CamaleonCms
       def download_private_file
         cama_uploader.enable_private_mode!
 
-        file = cama_uploader.fetch_file("private/#{params[:file]}")
+        sanitize_private_filename!
+        return render(plain: 'Invalid file', status: :forbidden) unless @private_file_path
 
-        return render plain: helpers.sanitize(file[:error]) if file.is_a?(Hash) && file[:error].present?
+        fetched = cama_uploader.fetch_file(@private_file_path)
 
-        send_file file, disposition: 'inline'
+        return render plain: helpers.sanitize(fetched[:error]) if fetched.is_a?(Hash) && fetched[:error].present?
+
+        send_file fetched, disposition: 'inline'
       end
 
       # render media for modal content
@@ -106,6 +109,13 @@ module CamaleonCms
 
       def verify_media_authorization
         authorize! :manage, :media
+      end
+
+      # Sanitizes the private file parameter to prevent path traversal.
+      # Sets @private_file_path if valid, nil otherwise.
+      def sanitize_private_filename!
+        name = File.basename(params[:file].to_s)
+        @private_file_path = ("private/#{name}" if name.present? && name == params[:file].to_s)
       end
 
       # init basic media variables

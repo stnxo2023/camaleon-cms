@@ -174,12 +174,12 @@ class PluginRoutes
     @@all_sites = nil
     @@_vars.each { |v| class_variable_set("@@cache_#{v}", nil) }
     Rails.application.reload_routes!
-    @@_after_reload.uniq.each { |r| eval(r) }
+    @@_after_reload.uniq.each(&:call)
   end
 
-  # permit to add extra actions for reload routes
+  # Add a callable (Proc/Lambda) to run after routes reload; strings are not supported.
   def self.add_after_reload_routes(command)
-    @@_after_reload << command
+    @@_after_reload << (command.is_a?(String) ? raise(ArgumentError, 'Expected a callable (Proc/Lambda), not a String') : command)
   end
 
   # return all enabled plugins []

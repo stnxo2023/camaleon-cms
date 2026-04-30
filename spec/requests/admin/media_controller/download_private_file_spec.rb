@@ -38,10 +38,18 @@ RSpec.describe 'Download private file requests', type: :request do
     end
 
     context 'when file path is invalid' do
-      it 'returns invalid file path error' do
+      it 'rejects path traversal attempts' do
         get '/admin/media/download_private_file', params: { file: './../../../../../etc/passwd' }
 
-        expect(response.body).to include('Invalid file path')
+        expect(response).to have_http_status(:forbidden)
+        expect(response.body).to include('Invalid file')
+      end
+
+      it 'rejects filenames containing directory separators' do
+        get '/admin/media/download_private_file', params: { file: 'subdir/secret.txt' }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(response.body).to include('Invalid file')
       end
     end
 

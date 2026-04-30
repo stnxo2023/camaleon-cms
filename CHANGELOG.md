@@ -74,6 +74,8 @@
   - This prevents authenticated admins from potentially executing arbitrary code via crafted error messages
   - Thanks, Amir Aliu and Enrik Mustafa for reporting this
 
+- **Security fix:** Fix Brakeman vulnerabilities: dangerous eval in plugin_routes, path traversal in MediaController, and SQL injection in visibility_post_helper, [#1160](https://github.com/owen2345/camaleon-cms/pull/1160)
+
 # [2.9.1](https://github.com/owen2345/camaleon-cms/tree/2.9.1) (2025-03-15)
 
 **This release is fixing several security vulnerabilities! Please, upgrade ASAP!**

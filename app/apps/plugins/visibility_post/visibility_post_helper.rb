@@ -57,7 +57,7 @@ module Plugins
                                  if ActiveRecord::Base.connection.adapter_name.downcase.include?('mysql')
                                    args[:active_record].where("visibility != 'private' or (visibility = 'private' and FIND_IN_SET(?, #{CamaleonCms::Post.table_name}.visibility_value))", current_site.visitor_role)
                                  else
-                                   args[:active_record].where("visibility != 'private' or (visibility = 'private' and (',' || #{CamaleonCms::Post.table_name}.visibility_value || ',') LIKE '%,#{current_site.visitor_role},%')")
+                                   args[:active_record].where("visibility != 'private' or (visibility = 'private' and (',' || #{CamaleonCms::Post.table_name}.visibility_value || ',') LIKE ?)", "%,#{current_site.visitor_role},%")
                                  end
                                else
                                  args[:active_record].where("visibility != 'private'")
