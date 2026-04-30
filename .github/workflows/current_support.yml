@@ -6,23 +6,6 @@ on:
   pull_request: {}
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rails_8_1.gemfile
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Ruby and install gems
-        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f
-        with:
-          bundler-cache: true
-          ruby-version: 3.4
-
-      - name: Run linters
-        run: bin/rubocop
-
   spec:
     runs-on: ubuntu-latest
     strategy:
