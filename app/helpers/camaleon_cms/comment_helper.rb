@@ -1,5 +1,7 @@
 module CamaleonCms
   module CommentHelper
+    LABELS = { 'approved' => 'success', 'pending' => 'warning', 'spam' => 'danger' }.freeze
+
     # return common data to save a new comment
     # user_id, author, aothor_email, author_ip, approved, :agent
     def cama_comments_get_common_data
@@ -18,7 +20,6 @@ module CamaleonCms
     def cama_comments_render_html(comments)
       comments.decorate.map do |comment|
         author = comment.the_author
-        labels = { 'approved' => 'success', 'pending' => 'warning', 'spam' => 'danger' }
         content_tag(:div, class: 'media') do
           [
             content_tag(:div, class: 'media-left') do
@@ -35,7 +36,7 @@ module CamaleonCms
                     content_tag(:small, comment.the_created_at),
                     ' ',
                     content_tag(:span, t("camaleon_cms.admin.comments.message.#{comment.approved}"),
-                                class: "label label-#{labels[comment.approved]} pull-right")
+                                class: "label label-#{LABELS[comment.approved]} pull-right")
                   ].join.html_safe
                 end,
                 content_tag(:div, sanitize(comment.content), class: 'comment_content'),
