@@ -1,19 +1,22 @@
 # Change Log
 
-## Unreleased [2.9.2](https://github.com/owen2345/camaleon-cms/tree/2.9.2)
+## Unreleased
+
+## [2.9.2](https://github.com/owen2345/camaleon-cms/tree/2.9.2) (2026-05-01)
 
 **This release is fixing several security vulnerabilities! Please, upgrade ASAP!**
 
-- **Security fix:** Fix open redirect vulnerability in session helper via return_to cookie, [#1155](https://github.com/owen2345/camaleon-cms/pull/1155)
-
-- **Security fix:** Fix mass assignment vulnerabilities in NavMenusController, [#1157](https://github.com/owen2345/camaleon-cms/pull/1157)
-
-- **Security fix:** Fix mass assignment vulnerabilities in Categories, Widgets, Posts, Users, and other admin controllers, [#1158](https://github.com/owen2345/camaleon-cms/pull/1158)
-
-- **BREAKING CHANGE** - Add permissions for Custom Fields management in the admin area
-  - Existing installs upgrading to 2.9.2 should review the [migration guide](docs/upgrading-to-2.9.2.md)
-
-- **BREAKING CHANGE - Security fix:** Restrict `select_eval` custom field type to authorized users only
+- **BREAKING CHANGE - Security fix:** Fix Broken Access Control (CWE-862) in MediaController, [#1147](https://github.com/owen2345/camaleon-cms/pull/1147)
+  - Add consistent authorization checks to all MediaController endpoints requiring `:manage, :media` permission
+  - Previously, only `index` and `ajax` actions checked authorization; other endpoints (`upload`, `download_private_file`, `crop`, `actions`) only checked authentication
+  - All endpoints now protected by centralized `before_action :verify_media_authorization`
+  - Thanks, Seoyoung Kang for reporting this
+- **BREAKING CHANGE - Security fix:** Centralize plugin admin authorization in `PluginsAdminController`, [#1142](https://github.com/owen2345/camaleon-cms/pull/1142)
+  - All plugin admin routes now require `manage :plugins` permission by default (fail-closed)
+  - `/admin/plugins/*/settings` and related endpoints protected without per-controller opt-in
+  - Third-party plugins (via Ruby gems like `cama_contact_form`, `cama_meta_tag`) automatically protected when inheriting from `PluginsAdminController`
+  - Thanks, Amir Aliu and Enrik Mustafa for reporting this
+- **BREAKING CHANGE - Security fix:** Restrict `select_eval` custom field type to authorized users only, [#1136](https://github.com/owen2345/camaleon-cms/pull/1136)
   - The `select_eval` field type can execute arbitrary Ruby code and now requires explicit permission
   - Added `select_eval` permission to User Roles UI (appears as "Select Eval" checkbox under Manager Permissions)
   - Users with 'admin' role automatically have full access (via `can :manage, :all`)
@@ -23,60 +26,70 @@
   - **Migration required:** See [docs/MIGRATION_SELECT_EVAL.md](docs/MIGRATION_SELECT_EVAL.md) for detailed upgrade instructions
   - **Security documentation:** See [Permissions & Security Guide](docs/security/permissions.md)
   - Run `bundle exec rake camaleon_cms:backfill_select_eval_permission` to fix the permission checkbox on admin roles
+    - Thanks, Ik0nw, Thomas Wells, Amir Aliu & Enrik Mustafa, and l1nk for reporting this 
+- **BREAKING CHANGE** - Add permissions for Custom Fields management in the admin area, [#1134](https://github.com/owen2345/camaleon-cms/pull/1134)
+  - Existing installs upgrading to 2.9.2 should review the [migration guide](docs/upgrading-to-2.9.2.md)
 
-- **BREAKING CHANGE - Security fix:** Centralize plugin admin authorization in `PluginsAdminController`
-  - All plugin admin routes now require `manage :plugins` permission by default (fail-closed)
-  - `/admin/plugins/*/settings` and related endpoints protected without per-controller opt-in
-  - Third-party plugins (via Ruby gems like `cama_contact_form`, `cama_meta_tag`) automatically protected when inheriting from `PluginsAdminController`
-  - Thanks, Amir Aliu and Enrik Mustafa for reporting this
-
+- **Security fix:** Fix Brakeman vulnerabilities: dangerous eval in plugin_routes, path traversal in MediaController, and SQL injection in visibility_post_helper, [#1160](https://github.com/owen2345/camaleon-cms/pull/1160)
+- **Security fix:** Fix Brakeman XSS vulnerabilities, [#1159](https://github.com/owen2345/camaleon-cms/pull/1159)
+- **Security fix:** Fix mass assignment vulnerabilities in Categories, Widgets, Posts, Users, and other admin controllers, [#1158](https://github.com/owen2345/camaleon-cms/pull/1158)
+- **Security fix:** Fix mass assignment vulnerabilities in NavMenusController, [#1157](https://github.com/owen2345/camaleon-cms/pull/1157)
+- **Security fix:** Fix open redirect vulnerability in session helper via return_to cookie, [#1155](https://github.com/owen2345/camaleon-cms/pull/1155)
 - **Security fix:** Fix reflected XSS vulnerability via `params[:info]` in flash messages, [#1154](https://github.com/owen2345/camaleon-cms/pull/1154)
-
-- **BREAKING CHANGE - Security fix:** Fix Broken Access Control (CWE-862) in MediaController
-  - Add consistent authorization checks to all MediaController endpoints requiring `:manage, :media` permission
-  - Previously, only `index` and `ajax` actions checked authorization; other endpoints (`upload`, `download_private_file`, `crop`, `actions`) only checked authentication
-  - All endpoints now protected by centralized `before_action :verify_media_authorization`
-  - Thanks, Seoyoung Kang for reporting this
-
-- **Security fix:** Fix IDOR (CWE-639) in CategoriesController
-  - Users with category management permission for one Post Type could modify/delete categories from other Post Types by manipulating request parameters
-  - Changed `set_category` to scope lookup to authorized `@post_type` instead of global lookup
-  - Thanks, Seoyoung Kang for reporting this
-
-- **Security fix:** Fix Stored XSS (CWE-79) in the_content helper
-  - The `the_content` helper was using `.html_safe` which bypassed Rails' XSS protection
-  - Changed to use `sanitize()` which uses Rails' allowlist approach
-  - Thanks, Pratik Karan for reporting this
-
-- Fix: rewind Tempfile after scanning to avoid 0-byte uploads (regression fixed; tests added).
-
-- Add `AGENTS.md` and AI agent documentation in `docs/ai/` for agent behavior, Rails/RSpec conventions, and project guidance
-
-- **Security fix:** Fix mass assignment vulnerability in user registration (cross-tenant account injection)
-  - Replace `permit!` with explicit whitelist of allowed params in `SessionsController#user_permit_data`
-  - Remove `params[:meta]` from user registration to prevent arbitrary meta injection
-  - Thanks, Aryan Bhagat for reporting this
-
 - **Security fix:** Fix mass assignment and open redirect vulnerabilities in SitesController, [#1152](https://github.com/owen2345/camaleon-cms/pull/1152)
   - Replace `permit!` with strong `site_params` allowing only `:name`, `:slug`, `:description`
   - Redirect to `cama_admin_path` instead of `@site.the_admin_url` to prevent open redirect
-
-- **Security fix:** Fix Stored XSS in post title rendering
-  - Add HTML escaping to post titles when displayed in admin views (e.g., drafts list)
-  - Thanks, Amir Aliu and Enrik Mustafa for reporting this
-
-- **Security fix:** Fix SQL Injection in `PostUniqValidator` (authenticated, boolean-based blind SQLi via post slug)
-  - Use parameterized queries instead of string interpolation for slug validation
-  - Thanks, Amir Aliu and Enrik Mustafa for reporting this
-
-- **Security fix:** Fix SSTI (Server-Side Template Injection) in test_email endpoint
+- **Security fix:** Fix Stored XSS (CWE-79) in the_content helper, [#1149](https://github.com/owen2345/camaleon-cms/pull/1149)
+  - The `the_content` helper was using `.html_safe` which bypassed Rails' XSS protection
+  - Changed to use `sanitize()` which uses Rails' allowlist approach
+  - Thanks, Pratik Karan for reporting this
+- **Security fix:** Fix IDOR (CWE-639) in CategoriesController, [#1148](https://github.com/owen2345/camaleon-cms/pull/1148)
+  - Users with category management permission for one Post Type could modify/delete categories from other Post Types by manipulating request parameters
+  - Changed `set_category` to scope lookup to authorized `@post_type` instead of global lookup
+  - Thanks, Seoyoung Kang for reporting this
+- **Security fix:** Fix SSTI (Server-Side Template Injection) in test_email endpoint, [#1145](https://github.com/owen2345/camaleon-cms/pull/1145)
   - Replace `render inline:` with `render plain:` to prevent ERB evaluation of exception messages
   - This prevents authenticated admins from potentially executing arbitrary code via crafted error messages
   - Thanks, Amir Aliu and Enrik Mustafa for reporting this
+- **Security fix:** Fix SQL Injection in `PostUniqValidator` (authenticated, boolean-based blind SQLi via post slug), [#1144](https://github.com/owen2345/camaleon-cms/pull/1144)
+  - Use parameterized queries instead of string interpolation for slug validation
+  - Thanks, Amir Aliu and Enrik Mustafa for reporting this
+- **Security fix:** Fix Stored XSS in post title rendering, [#1143](https://github.com/owen2345/camaleon-cms/pull/1143)
+  - Add HTML escaping to post titles when displayed in admin views (e.g., drafts list)
+  - Thanks, Amir Aliu and Enrik Mustafa for reporting this
+- **Security fix:** Upgrade development Rails to 8.1.3 and other gems, [#1141](https://github.com/owen2345/camaleon-cms/pull/1141)
+- **Security fix:** Fix mass assignment vulnerability in user registration (cross-tenant account injection), [#1140](https://github.com/owen2345/camaleon-cms/pull/1140)
+  - Replace `permit!` with explicit whitelist of allowed params in `SessionsController#user_permit_data`
+  - Remove `params[:meta]` from user registration to prevent arbitrary meta injection
+  - Thanks, Aryan Bhagat for reporting this
+- **Security fix:** Add authorization checks for broken access control, [#1139](https://github.com/owen2345/camaleon-cms/pull/1139)
+  - Thanks, Amir Aliu & Enrik Mustafa for reporting this 
+- **Security fix:** Fix SSRF vulnerability in media URL upload, [#1133](https://github.com/owen2345/camaleon-cms/pull/1133)
+  - Thanks, Minjun Lee for reporting this 
+- **Security fix:** Bump `json`, `action_text-trix`, `bcrypt`, `loofah` to fix vulnerabilities, [#1132](https://github.com/owen2345/camaleon-cms/pull/1132)
+- **Security fix:** Fix RCE in custom-field i18n rendering, [#1129](https://github.com/owen2345/camaleon-cms/pull/1129)
+  - Thanks, Nguyen Trung Kien and Mohammad KH Yaseen for reporting this 
+- **Security fix:** Fix path traversal in `CamaleonCmsAwsUploader`, [#1127](https://github.com/owen2345/camaleon-cms/pull/1127)
+  - Thanks, William chengw625@gmail.com, Michael Loomis (@investigato), and Wade Sparks III from VulnCheck for reporting this 
 
-- **Security fix:** Fix Brakeman vulnerabilities: dangerous eval in plugin_routes, path traversal in MediaController, and SQL injection in visibility_post_helper, [#1160](https://github.com/owen2345/camaleon-cms/pull/1160)
+
 
 - Add Brakeman and bundle-audit to CI, [#1161](https://github.com/owen2345/camaleon-cms/pull/1161)
+- CI: Update `actions/checkout` to v6, [#1156](https://github.com/owen2345/camaleon-cms/pull/1156)
+- CI: Use binstubs in CI, [#1151](https://github.com/owen2345/camaleon-cms/pull/1151)
+- Security: Add `brakeman` and `bundle-audit` gems to development/test groups, [#1150](https://github.com/owen2345/camaleon-cms/pull/1150)
+- Docs: Harden `AGENTS.md` to enforce agent workflow, [#1146](https://github.com/owen2345/camaleon-cms/pull/1146)
+- Docs: Add `AGENTS.md` and AI agent documentation in `docs/ai/` for agent behavior, Rails/RSpec conventions, and project guidance, [#1138](https://github.com/owen2345/camaleon-cms/pull/1138)
+- Fix: rewind Tempfile after scanning to avoid 0-byte uploads (regression fixed; tests added), [#1137](https://github.com/owen2345/camaleon-cms/pull/1137)
+  - Thanks, Minjun Lee for reporting this
+- Fix: Apply Rubocop style fixes, [#1131](https://github.com/owen2345/camaleon-cms/pull/1131)
+- Dependencies: Bump `flatted` from 3.2.7 to 3.4.2, [#1130](https://github.com/owen2345/camaleon-cms/pull/1130)
+- Fix: Add migration safe-guards and modernize migration code, [#1128](https://github.com/owen2345/camaleon-cms/pull/1128)
+- Dependencies: Bump `minimatch` from 3.1.2 to 3.1.5, [#1126](https://github.com/owen2345/camaleon-cms/pull/1126)
+- CI: Modernize CI, remove EOL Ruby/Rails versions, [#1125](https://github.com/owen2345/camaleon-cms/pull/1125)
+- Dependencies: Bump `cross-spawn` from 7.0.3 to 7.0.6, [#1122](https://github.com/owen2345/camaleon-cms/pull/1122)
+- Fix: Normalize widget behavior, [#1120](https://github.com/owen2345/camaleon-cms/pull/1120)
+- Fix: Replace deprecated `JSON.fast_generate` with `generate`, [#1116](https://github.com/owen2345/camaleon-cms/pull/1116)
 
 # [2.9.1](https://github.com/owen2345/camaleon-cms/tree/2.9.1) (2025-03-15)
 
